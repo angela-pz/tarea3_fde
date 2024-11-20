@@ -71,6 +71,11 @@ while True:
             sim.setJointTargetVelocity(leftMotor, 0.2)  
             sim.setJointTargetVelocity(rightMotor, 0.2)
     
+        if centro_y > resolution[1] * 0.9:  #  0.9 según proximidad
+            sim.setJointTargetVelocity(leftMotor, 0)  
+            sim.setJointTargetVelocity(rightMotor, 0)
+            print("Objeto rojo cerca. Detenemos robot feo.")
+            break  # Finaliza el programa al alcanzar el objeto rojo
 
     # Calculamos la velocidad del robot
     linearVelocity, _ = sim.getVelocity(My_robot)
@@ -79,9 +84,9 @@ while True:
 
     # Verificamos si alguno de los sensores detecta un obstáculo dentro de los 0.2 metros
     if (frontState == 1 and frontDistance < threshold) or \
-       (leftState == 1 and leftDistance < threshold) or \
-       (rightState == 1 and rightDistance < threshold) or \
-       (right2State == 1 and right2Distance < threshold):
+         (leftState == 1 and leftDistance < threshold) or \
+         (rightState == 1 and rightDistance < threshold) or \
+         (right2State == 1 and right2Distance < threshold):
         
         print(f"Obstáculo detectado. Distancias a las que se ha detectado: - Frente: {frontDistance}, Izquierda: {leftDistance}, Derecha: {rightDistance}, Derecha2: {right2Distance}")
 
@@ -114,7 +119,7 @@ while True:
         sim.setJointTargetVelocity(rightMotor, 0.5)
     
     
-
+#cámara:
     cv.namedWindow("Camera", cv.WINDOW_NORMAL)
     cv.resizeWindow("Camera", resolution[0], resolution[1])
     cv.imshow("Camera", red_mask)
