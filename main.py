@@ -41,18 +41,28 @@ while True:
     red_image = cv.cvtColor(image, cv.COLOR_RGB2HSV)
     red_mask = cv.inRange(red_image, red_low, red_high)
 
-    red_moment = cv.moments(red_mask)
+    red_moment = cv.moments(red_mask) 
     if red_moment["m00"] > 0:
         centro_x = int(red_moment["m10"] / red_moment["m00"])
         centro_y = int(red_moment["m01"] / red_moment["m00"])
         print(f"x: {centro_x}, y: {centro_y}")
 
-        #stop when red is in center
-        if centro_x < resolution[0] / 2:
-            sim.setJointTargetVelocity(leftMotor, 0)
-            sim.setJointTargetVelocity(rightMotor, 0)
-        else:
-            sim.setJointTargetVelocity(leftMotor, -0.2)
+        # Definir el centro de la imagen
+        centro_pantalla_x = resolution[0] / 2
+
+        # Si el objeto rojo está a la izquierda del centro
+        if centro_x < centro_pantalla_x - 20:  # Margen de error (20 píxeles, ajustable)
+            sim.setJointTargetVelocity(leftMotor, -0.1)  # Gira a la izquierda
+            sim.setJointTargetVelocity(rightMotor, 0.1)
+        
+        # Si el objeto rojo está a la derecha del centro
+        elif centro_x > centro_pantalla_x + 20:  # Margen de error (20 píxeles, ajustable)
+            sim.setJointTargetVelocity(leftMotor, 0.1)  # Gira a la derecha
+            sim.setJointTargetVelocity(rightMotor, -0.1)
+
+    # Si el objeto rojo está centrado
+    else:
+        sim.setJointTargetVelocity(leftMotor, 0.2)  # Avanza hacia el objeto
         sim.setJointTargetVelocity(rightMotor, 0.2)
     # Detectamos la distancia con los sensores
     frontState, frontDistance, *_ = sim.readProximitySensor(distanceSensorLeft)
