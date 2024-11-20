@@ -27,7 +27,7 @@ sim.setJointTargetVelocity(rightMotor, 0.5)
 threshold = 0.2  
 
 while True: 
-
+# Capturamos la imagen de la cámara
     packed_image, resolution = sim.getVisionSensorImg(camera)
     raw_image = sim.unpackUInt8Table(packed_image, 0, 0)
     image = np.array(raw_image, dtype = np.uint8)
@@ -35,40 +35,42 @@ while True:
     image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
     image = np.rot90(image, 2)
     image = np.fliplr(image)
-
+#Aqui detectamos si el color es rojo (rgb) mediante los sensores
     red_low = np.array([110, 50, 50])
     red_high= np.array([130, 255, 255])
     red_image = cv.cvtColor(image, cv.COLOR_RGB2HSV)
     red_mask = cv.inRange(red_image, red_low, red_high)
 
-    red_moment = cv.moments(red_mask) 
+    red_moment = cv.moments(red_mask)
+
+    # Detectamos la distancia con los sensores ultrasónicos
+    frontState, frontDistance, *_ = sim.readProximitySensor(distanceSensorLeft)
+    leftState, leftDistance, *_ = sim.readProximitySensor(distanceSensorFrontLeft)
+    rightState, rightDistance, *_ = sim.readProximitySensor(distanceSensorFrontRight)
+    right2State, right2Distance, *_ = sim.readProximitySensor(distanceSensorRight)
+    #si detecta el color rojo:
     if red_moment["m00"] > 0:
         centro_x = int(red_moment["m10"] / red_moment["m00"])
         centro_y = int(red_moment["m01"] / red_moment["m00"])
         print(f"x: {centro_x}, y: {centro_y}")
 
-        # Definir el centro de la imagen
         centro_pantalla_x = resolution[0] / 2
-
-        # Si el objeto rojo está a la izquierda del centro
-        if centro_x < centro_pantalla_x - 20:  # Margen de error (20 píxeles, ajustable)
-            sim.setJointTargetVelocity(leftMotor, -0.1)  # Gira a la izquierda
+        margen = 20  # Margen  centrado
+        # Gira hacia la izquierda si el objeto está a la izquierda
+        if centro_x < centro_pantalla_x - margen:
+            sim.setJointTargetVelocity(leftMotor, -0.1)  
             sim.setJointTargetVelocity(rightMotor, 0.1)
-        
-        # Si el objeto rojo está a la derecha del centro
-        elif centro_x > centro_pantalla_x + 20:  # Margen de error (20 píxeles, ajustable)
-            sim.setJointTargetVelocity(leftMotor, 0.1)  # Gira a la derecha
+
+        # Gira hacia la derecha si el objeto está a la derecha
+        elif centro_x > centro_pantalla_x + margen:
+            sim.setJointTargetVelocity(leftMotor, 0.1)  
             sim.setJointTargetVelocity(rightMotor, -0.1)
 
-    # Si el objeto rojo está centrado
-    else:
-        sim.setJointTargetVelocity(leftMotor, 0.2)  # Avanza hacia el objeto
-        sim.setJointTargetVelocity(rightMotor, 0.2)
-    # Detectamos la distancia con los sensores
-    frontState, frontDistance, *_ = sim.readProximitySensor(distanceSensorLeft)
-    leftState, leftDistance, *_ = sim.readProximitySensor(distanceSensorFrontLeft)
-    rightState, rightDistance, *_ = sim.readProximitySensor(distanceSensorFrontRight)
-    right2State, right2Distance, *_ = sim.readProximitySensor(distanceSensorRight)
+        # Avanza recto si el objeto está centrado
+        else:
+            sim.setJointTargetVelocity(leftMotor, 0.2)  
+            sim.setJointTargetVelocity(rightMotor, 0.2)
+    
 
     # Calculamos la velocidad del robot
     linearVelocity, _ = sim.getVelocity(My_robot)
