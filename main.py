@@ -27,6 +27,33 @@ sim.setJointTargetVelocity(rightMotor, 0.5)
 threshold = 0.2  
 
 while True: 
+
+    packed_image, resolution = sim.getVisionSensorImg(camera)
+    raw_image = sim.unpackUInt8Table(packed_image, 0, 0)
+    image = np.array(raw_image, dtype = np.uint8)
+    image = image.reshape([resolution[1], resolution[0], 3])
+    image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+    image = np.rot90(image, 2)
+    image = np.fliplr(image)
+
+    red_low = np.array([110, 50, 50])
+    red_high= np.array([130, 255, 255])
+    red_image = cv.cvtColor(image, cv.COLOR_RGB2HSV)
+    red_mask = cv.inRange(red_image, red_low, red_high)
+
+    red_moment = cv.moments(red_mask)
+    if red_moment["m00"] > 0:
+        centro_x = int(red_moment["m10"] / red_moment["m00"])
+        centro_y = int(red_moment["m01"] / red_moment["m00"])
+        print(f"x: {centro_x}, y: {centro_y}")
+
+        #stop when red is in center
+        if centro_x < resolution[0] / 2:
+            sim.setJointTargetVelocity(leftMotor, 0)
+            sim.setJointTargetVelocity(rightMotor, 0)
+        else:
+            sim.setJointTargetVelocity(leftMotor, -0.2)
+        sim.setJointTargetVelocity(rightMotor, 0.2)
     # Detectamos la distancia con los sensores
     frontState, frontDistance, *_ = sim.readProximitySensor(distanceSensorLeft)
     leftState, leftDistance, *_ = sim.readProximitySensor(distanceSensorFrontLeft)
@@ -74,32 +101,7 @@ while True:
         sim.setJointTargetVelocity(leftMotor, 0.5)  
         sim.setJointTargetVelocity(rightMotor, 0.5)
     
-    packed_image, resolution = sim.getVisionSensorImg(camera)
-    raw_image = sim.unpackUInt8Table(packed_image, 0, 0)
-    image = np.array(raw_image, dtype = np.uint8)
-    image = image.reshape([resolution[1], resolution[0], 3])
-    image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
-    image = np.rot90(image, 2)
-    image = np.fliplr(image)
-
-    red_low = np.array([110, 50, 50])
-    red_high= np.array([130, 255, 255])
-    red_image = cv.cvtColor(image, cv.COLOR_RGB2HSV)
-    red_mask = cv.inRange(red_image, red_low, red_high)
-
-    red_moment = cv.moments(red_mask)
-    if red_moment["m00"] > 0:
-        centro_x = int(red_moment["m10"] / red_moment["m00"])
-        centro_y = int(red_moment["m01"] / red_moment["m00"])
-        print(f"x: {centro_x}, y: {centro_y}")
-
-        #stop when red is in center
-        if centro_x < resolution[0] / 2:
-            sim.setJointTargetVelocity(leftMotor, 0)
-            sim.setJointTargetVelocity(rightMotor, 0)
-        else:
-            sim.setJointTargetVelocity(leftMotor, -0.2)
-        sim.setJointTargetVelocity(rightMotor, 0.2)
+    
 
     cv.namedWindow("Camera", cv.WINDOW_NORMAL)
     cv.resizeWindow("Camera", resolution[0], resolution[1])
