@@ -18,6 +18,7 @@ distanceSensorLeft = sim.getObject('/PioneerP3DX/ultrasonicSensorL')
 distanceSensorFrontLeft = sim.getObject('/PioneerP3DX/ultrasonicSensorFL') 
 distanceSensorFrontRight = sim.getObject('/PioneerP3DX/ultrasonicSensorFR') 
 distanceSensorRight = sim.getObject('/PioneerP3DX/ultrasonicSensorR') 
+detectarRojo = False
 
 # Configuramos la velocidad inicial de nuestro robot
 sim.setJointTargetVelocity(leftMotor, 0.5)  
@@ -66,17 +67,20 @@ while True:
             sim.setJointTargetVelocity(leftMotor, 0.1)  
             sim.setJointTargetVelocity(rightMotor, -0.1)
 
-        # Avanza recto si el objeto está centrado
+        # Avanza recto si el objeto está centrado  
         else:
             sim.setJointTargetVelocity(leftMotor, 0.2)  
             sim.setJointTargetVelocity(rightMotor, 0.2)
+            detectarRojo = True
     
-        if centro_y > resolution[1] * 0.9:  #  0.9 según proximidad
-            sim.setJointTargetVelocity(leftMotor, 0)  
-            sim.setJointTargetVelocity(rightMotor, 0)
-            print("Objeto rojo cerca. Detenemos robot feo.")
-            break  # Finaliza el programa al alcanzar el objeto rojo
-
+        # if centro_y > resolution[1] * 0.9:  #  0.9 según proximidad
+        #     sim.setJointTargetVelocity(leftMotor, 0)  
+        #     sim.setJointTargetVelocity(rightMotor, 0)
+        #     print("Objeto rojo cerca. Detenemos robot feo.")
+        #     break  # Finaliza el programa al alcanzar el objeto rojo
+ 
+    else:
+        detectarRojo=False
     # Calculamos la velocidad del robot
     linearVelocity, _ = sim.getVelocity(My_robot)
     velocity = (linearVelocity[0]**2 + linearVelocity[1]**2 + linearVelocity[2]**2)**0.5
@@ -87,36 +91,40 @@ while True:
          (leftState == 1 and leftDistance < threshold) or \
          (rightState == 1 and rightDistance < threshold) or \
          (right2State == 1 and right2Distance < threshold):
-        
-        print(f"Obstáculo detectado. Distancias a las que se ha detectado: - Frente: {frontDistance}, Izquierda: {leftDistance}, Derecha: {rightDistance}, Derecha2: {right2Distance}")
+        if(detectarRojo==False):
 
-        # Cambiamos la dirección del robot para que no choque con la pared
-        sim.setJointTargetVelocity(leftMotor, -0.5)  
-        sim.setJointTargetVelocity(rightMotor, 0.5)
 
-        # Avanza  unos pasos de simulación para hacer el giro
-        for _ in range(20):
-            sim.step()
+            print(f"Obstáculo detectado. Distancias a las que se ha detectado: - Frente: {frontDistance}, Izquierda: {leftDistance}, Derecha: {rightDistance}, Derecha2: {right2Distance}")
 
-        # Vuelve a avanzar en línea recta después del giro
-        sim.setJointTargetVelocity(leftMotor, 0.5)  
-        sim.setJointTargetVelocity(rightMotor, 0.5)
+            # Cambiamos la dirección del robot para que no choque con la pared
+            sim.setJointTargetVelocity(leftMotor, -0.5)  
+            sim.setJointTargetVelocity(rightMotor, 0.5)
 
+            # Avanza  unos pasos de simulación para hacer el giro
+            for _ in range(20):
+                sim.step()
+
+            # Vuelve a avanzar en línea recta después del giro
+            sim.setJointTargetVelocity(leftMotor, 0.5)  
+            sim.setJointTargetVelocity(rightMotor, 0.5)
+        else:
+            sim.pauseSimulation()
+            
     #En caso de que no funcionen/no tenga sensores, al dtenerse con la pared, también girará:
-    elif velocity < 0.01:
-        print("Colisión detectada debido a falta de movimiento. Iniciando maniobra de giro.")
+    # elif velocity < 0.01:
+    #     print("Colisión detectada debido a falta de movimiento. Iniciando maniobra de giro.")
 
-        # Cambiamos la dirección del robot para intentar liberarlo del choque
-        sim.setJointTargetVelocity(leftMotor, -0.5)  
-        sim.setJointTargetVelocity(rightMotor, 0.5)
+    #     # Cambiamos la dirección del robot para intentar liberarlo del choque
+    #     sim.setJointTargetVelocity(leftMotor, -0.5)  
+    #     sim.setJointTargetVelocity(rightMotor, 0.5)
 
-        # Ejecuta unos pasos de simulación para realizar el giro
-        for _ in range(20):
-            sim.step()
+    #     # Ejecuta unos pasos de simulación para realizar el giro
+    #     for _ in range(20):
+    #         sim.step()
 
-        # Vuelve a avanzar en línea recta después del giro
-        sim.setJointTargetVelocity(leftMotor, 0.5)  
-        sim.setJointTargetVelocity(rightMotor, 0.5)
+    #     # Vuelve a avanzar en línea recta después del giro
+    #     sim.setJointTargetVelocity(leftMotor, 0.5)  
+    #     sim.setJointTargetVelocity(rightMotor, 0.5)
     
     
 #cámara:
@@ -133,6 +141,7 @@ while True:
     # Imprimimos el estado y sigue la simulación
     print(f"Estado del sensor frontal: {frontState}, Distancia al obstáculo: {frontDistance}")
     #avanza más steps de simulación
+    
     sim.step()
     
 
